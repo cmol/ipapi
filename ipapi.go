@@ -70,6 +70,7 @@ type queueElement struct {
 // Lookup adds query to queue and returns the result channel
 func Lookup(address string) (chan Response, error) {
 	if !started {
+		started = true
 		go run()
 	}
 	if len(queue) >= MaxQueueLength {
@@ -120,6 +121,7 @@ func run() {
 					log.Println(err.Error())
 					time.Sleep(10 * time.Second)
 				}
+				continue
 			}
 
 			body, err := ioutil.ReadAll(resp.Body)
@@ -137,6 +139,7 @@ func run() {
 				log.Println(err.Error())
 				time.Sleep(10 * time.Second)
 			}
+			break
 		}
 		close(q.response)
 	}

@@ -116,7 +116,7 @@ func TestLookup(t *testing.T) {
 				if !reflect.DeepEqual(got, tt.want) {
 					t.Errorf("Lookup() =\n%+v, want\n%+v", got, tt.want)
 				}
-			case <-time.After(10 * time.Second):
+			case <-time.After(3 * time.Second):
 				t.Errorf("Timed out waiting for response")
 			}
 		})
