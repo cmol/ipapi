@@ -112,9 +112,8 @@ func TestLookup(t *testing.T) {
 				t.Errorf("Lookup() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			got := Response{}
 			select {
-			case got = <-c:
+			case got := <-c:
 				if !reflect.DeepEqual(got, tt.want) {
 					t.Errorf("Lookup() =\n%+v, want\n%+v", got, tt.want)
 				}
