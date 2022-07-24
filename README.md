@@ -16,7 +16,6 @@ Install into your project using `go get github.com/cmol/ipapi`.
 The library works by returning a channel containing the result.
 
 ```go
-ipapi.Run()
 c, err := ipapi.Lookup("8.8.8.8")
 if err != nil {
   // handle error

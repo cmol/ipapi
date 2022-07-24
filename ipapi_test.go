@@ -106,7 +106,6 @@ func TestLookup(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			Fields = tt.fields
-			Run()
 			c, err := Lookup(tt.address)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Lookup() error = %v, wantErr %v", err, tt.wantErr)

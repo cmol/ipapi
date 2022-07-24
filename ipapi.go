@@ -29,6 +29,8 @@ var Endpoint = "http://ip-api.com/json/"
 // only relevant for rate limited usage.
 var MaxQueueLength = 50
 
+var started = false
+
 // Response holds data for each of the possible data points
 type Response struct {
 	Query         string   `json:"query,omitempty"`
@@ -67,6 +69,9 @@ type queueElement struct {
 
 // Lookup adds query to queue and returns the result channel
 func Lookup(address string) (chan Response, error) {
+	if !started {
+		go run()
+	}
 	if len(queue) >= MaxQueueLength {
 		return nil, errors.New("too many requests in queue")
 	}
@@ -91,11 +96,6 @@ func checkTTLAndSleep(r *http.Response) error {
 	}
 	time.Sleep(time.Duration(ttl) * time.Second)
 	return nil
-}
-
-// Run will start processing elements in the queue
-func Run() {
-	go run()
 }
 
 func run() {
