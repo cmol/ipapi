@@ -23,6 +23,10 @@ if err != nil {
 response := ipapi.Response{}
 select {
   case response = <-c:
+    if c.Status == "fail" {
+      // do something with c.message
+      return
+    }
     // do something with the response object
   case default:
     // channel was closed, handle error

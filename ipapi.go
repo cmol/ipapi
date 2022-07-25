@@ -5,9 +5,7 @@ package ipapi
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strconv"
 	"time"
@@ -99,48 +97,50 @@ func checkTTLAndSleep(r *http.Response) error {
 	return nil
 }
 
-func run() {
-	for q := range queue {
-		for i := 2; i > 0; i-- { // Try multiple times for rate limit
-			resp, err := http.Get(Endpoint + q.address + Fields)
-			if err != nil {
-				log.Fatalln(err)
-				resp.Body.Close()
-				break
-			}
-
-			if resp.StatusCode != http.StatusOK &&
-				resp.StatusCode != http.StatusTooManyRequests {
-				log.Fatalln(resp.Status)
-				resp.Body.Close()
-				break
-			}
-
-			if resp.StatusCode == http.StatusTooManyRequests {
-				if err := checkTTLAndSleep(resp); err != nil {
-					log.Println(err.Error())
-					time.Sleep(10 * time.Second)
-				}
-				continue
-			}
-
-			body, err := ioutil.ReadAll(resp.Body)
-			if err != nil {
-				log.Fatalln(err)
-				resp.Body.Close()
-				break
-			}
-			var result Response
-			if err := json.Unmarshal(body, &result); err != nil { // Parse []byte to go struct pointer
-				fmt.Println("Can not unmarshal JSON")
-			}
-			q.response <- result
-			if err := checkTTLAndSleep(resp); err != nil {
-				log.Println(err.Error())
-				time.Sleep(10 * time.Second)
-			}
+func processRequest(q *queueElement) {
+	result := Response{Status: "fail"}
+	for i := 2; i > 0; i-- { // Try multiple times for rate limit
+		resp, err := http.Get(Endpoint + q.address + Fields)
+		if err != nil {
+			result.Message = err.Error()
+			resp.Body.Close()
 			break
 		}
-		close(q.response)
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK &&
+			resp.StatusCode != http.StatusTooManyRequests {
+			result.Message = resp.Status
+			break
+		}
+
+		if resp.StatusCode == http.StatusTooManyRequests {
+			if err := checkTTLAndSleep(resp); err != nil {
+				time.Sleep(10 * time.Second)
+			}
+			continue
+		}
+
+		body, err := ioutil.ReadAll(resp.Body)
+		if err != nil {
+			result.Message = err.Error()
+			break
+		}
+		if err := json.Unmarshal(body, &result); err != nil {
+			result.Message = "cannot unmarshal JSON" + err.Error()
+			break
+		}
+		q.response <- result
+		if err := checkTTLAndSleep(resp); err != nil {
+			time.Sleep(10 * time.Second)
+		}
+		return
+	}
+	q.response <- result
+}
+
+func run() {
+	for q := range queue {
+		processRequest(&q)
 	}
 }
