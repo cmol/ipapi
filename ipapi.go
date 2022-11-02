@@ -27,6 +27,9 @@ var Endpoint = "http://ip-api.com/json/"
 // only relevant for rate limited usage.
 var MaxQueueLength = 50
 
+// TTLBuffer is added wait time for the API to let its TTL reach zero
+var TTLBuffer = 5
+
 var started = false
 
 // Response holds data for each of the possible data points
@@ -93,7 +96,7 @@ func checkTTLAndSleep(r *http.Response) error {
 	if err != nil {
 		return errors.New("unable to get X-Ttl parameter")
 	}
-	time.Sleep(time.Duration(ttl) * time.Second)
+	time.Sleep(time.Duration(ttl+TTLBuffer) * time.Second)
 	return nil
 }
 
